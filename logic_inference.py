@@ -1,9 +1,3 @@
-"""
-AICT Assignment
-Logical Inference for Service Rules & Advisory Consistency
-Component Owner: [Your Name]
-"""
-
 # =========================
 # Propositional Symbols
 # =========================
@@ -21,116 +15,117 @@ INT_WORKS = "INT_WORKS"
 REDUCED = "REDUCED"
 SUSPENDED = "SUSPENDED"
 
-INVALID_ROUTE = "INVALID_ROUTE"
 VALID_ROUTE = "VALID_ROUTE"
+INVALID_ROUTE = "INVALID_ROUTE"
+
+CONTRADICTION = "CONTRADICTION"
 
 
 # =========================
-# Knowledge Base Rules
-# CNF Representation
-# Each clause is a set of literals
-# Negation is represented using "~"
+# Knowledge Base Rules (CNF)
 # =========================
 
 def get_rules():
     rules = []
 
-    # R1: FUTURE -> TEL_EXT
+    # R1: Future mode implies TEL extension exists
     rules.append({"~" + FUTURE, TEL_EXT})
 
-    # R2: FUTURE -> CRL_EXT
+    # R2: Future mode implies CRL extension exists
     rules.append({"~" + FUTURE, CRL_EXT})
 
-    # R3: TODAY -> not TEL_EXT
+    # R3: Today mode implies TEL extension does not exist
     rules.append({"~" + TODAY, "~" + TEL_EXT})
 
-    # R4: INT_WORKS -> REDUCED
+    # R4: Today mode implies CRL extension does not exist
+    rules.append({"~" + TODAY, "~" + CRL_EXT})
+
+    # R5: Systems integration works imply reduced service
     rules.append({"~" + INT_WORKS, REDUCED})
 
-    # R5: SUSPENDED -> not REDUCED
+    # R6: Suspended service cannot be reduced service
     rules.append({"~" + SUSPENDED, "~" + REDUCED})
 
-    # R6: TODAY and USE_T5 -> INVALID_ROUTE
+    # R7: Today mode cannot use T5
     rules.append({"~" + TODAY, "~" + USE_T5, INVALID_ROUTE})
 
-    # R7: INT_WORKS and USE_TM_CA -> INVALID_ROUTE
+    # R8: Integration works invalidate routes using TM–CA
     rules.append({"~" + INT_WORKS, "~" + USE_TM_CA, INVALID_ROUTE})
 
-    # R8: SUSPENDED and USE_TM_CA -> INVALID_ROUTE
+    # R9: Suspended segments invalidate routes
     rules.append({"~" + SUSPENDED, "~" + USE_TM_CA, INVALID_ROUTE})
 
-    # R9: INVALID_ROUTE -> not VALID_ROUTE
+    # R10: Invalid route implies not valid route
     rules.append({"~" + INVALID_ROUTE, "~" + VALID_ROUTE})
 
-    # R10: REDUCED and SUSPENDED is a contradiction
-    rules.append({"~" + REDUCED, "~" + SUSPENDED})
+    # R11: Reduced and suspended together is a contradiction
+    rules.append({"~" + REDUCED, "~" + SUSPENDED, CONTRADICTION})
+
+    # R12: Suspended T5 cannot be used
+    rules.append({"~" + SUSPENDED, "~" + USE_T5, INVALID_ROUTE})
 
     return rules
 
 
 # =========================
-# Utility Functions
+# Resolution Utilities
 # =========================
 
 def negate(literal):
-    if literal.startswith("~"):
-        return literal[1:]
-    return "~" + literal
+    return literal[1:] if literal.startswith("~") else "~" + literal
 
 
-def resolve(clause1, clause2):
-    for literal in clause1:
-        if negate(literal) in clause2:
-            resolvent = (clause1 | clause2) - {literal, negate(literal)}
-            return resolvent
+def resolve(c1, c2):
+    for lit in c1:
+        if negate(lit) in c2:
+            return (c1 | c2) - {lit, negate(lit)}
     return None
 
 
-# =========================
-# Resolution Based Inference
-# =========================
-
-def resolution(kb, query):
+def resolution_entails(kb, query):
     clauses = [set(c) for c in kb]
     clauses.append({negate(query)})
 
     while True:
-        new_clauses = []
-
+        new = []
         for i in range(len(clauses)):
             for j in range(i + 1, len(clauses)):
                 resolvent = resolve(clauses[i], clauses[j])
                 if resolvent is not None:
                     if len(resolvent) == 0:
                         return True
-                    new_clauses.append(resolvent)
+                    new.append(resolvent)
 
-        if all(c in clauses for c in new_clauses):
+        if all(c in clauses for c in new):
             return False
 
-        clauses.extend(new_clauses)
+        clauses.extend(new)
 
 
 # =========================
 # Scenario Runner
 # =========================
 
-def run_scenario(name, facts, query):
+def run_scenario(name, facts):
     print("\n==============================")
     print("Scenario:", name)
     print("Facts:", facts)
-    print("Query:", query)
 
     kb = get_rules()
-    for fact in facts:
-        kb.append({fact})
+    for f in facts:
+        kb.append({f})
 
-    result = resolution(kb, query)
+    # First: check contradiction
+    if resolution_entails(kb, CONTRADICTION):
+        print("Inference Result: CONTRADICTORY ADVISORY SET")
+        return
 
-    if result:
-        print("Inference Result:", query, "is TRUE")
-    else:
-        print("Inference Result:", query, "is FALSE")
+    # Then: check invalid route
+    if resolution_entails(kb, INVALID_ROUTE):
+        print("Inference Result: INVALID ROUTE")
+        return
+
+    print("Inference Result: VALID ROUTE")
 
 
 # =========================
@@ -139,45 +134,42 @@ def run_scenario(name, facts, query):
 
 if __name__ == "__main__":
 
-    # Scenario 1: Valid route in Today Mode
     run_scenario(
         "S1 - Today Mode using TM to CA",
-        {TODAY, USE_TM_CA},
-        VALID_ROUTE
+        {TODAY, USE_TM_CA}
     )
 
-    # Scenario 2: Invalid route using T5 in Today Mode
     run_scenario(
         "S2 - Today Mode using T5",
-        {TODAY, USE_T5},
-        INVALID_ROUTE
+        {TODAY, USE_T5}
     )
 
-    # Scenario 3: Invalid route during integration works
     run_scenario(
         "S3 - Future Mode with Integration Works",
-        {FUTURE, USE_TM_CA, INT_WORKS},
-        INVALID_ROUTE
+        {FUTURE, USE_TM_CA, INT_WORKS}
     )
 
-    # Scenario 4: Valid route using T5 in Future Mode
     run_scenario(
         "S4 - Future Mode using T5",
-        {FUTURE, USE_T5},
-        VALID_ROUTE
+        {FUTURE, USE_T5}
     )
 
-    # Scenario 5: Contradictory advisories
     run_scenario(
         "S5 - Reduced and Suspended Service",
-        {REDUCED, SUSPENDED},
-        INVALID_ROUTE
+        {REDUCED, SUSPENDED}
     )
 
-    # Scenario 6: Contradictory advisory - TEL extension in Today Mode
     run_scenario(
         "S6 - Today Mode with TEL Extension Declared",
-        {TODAY, TEL_EXT},
-        INVALID_ROUTE
+        {TODAY, TEL_EXT}
     )
 
+    run_scenario(
+        "S7 - Today Mode with CRL Extension Declared",
+        {TODAY, CRL_EXT}
+    )
+
+    run_scenario(
+        "S8 - Future Mode with T5 Suspended",
+        {FUTURE, USE_T5, SUSPENDED}
+    )
