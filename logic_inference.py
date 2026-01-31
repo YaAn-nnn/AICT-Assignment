@@ -1,75 +1,85 @@
-# =========================
+# =====================================================
+# Assumptions (derived from problem statement)
+# =====================================================
+# 1. TODAY and FUTURE represent mutually exclusive network modes.
+# 2. T5, TEL extension, and CRL extension exist only in Future Mode.
+# 3. Routes using unavailable stations or segments are invalid.
+# 4. Systems integration works require service adjustments.
+# 5. Suspended service overrides all routing decisions.
+# 6. Contradictory advisories invalidate decision-making.
+
+# =====================================================
 # Propositional Symbols
-# =========================
+# =====================================================
 
 TODAY = "TODAY"
 FUTURE = "FUTURE"
 
-USE_T5 = "USE_T5"
-USE_TM_CA = "USE_TM_CA"
+USE_T5 = "USE_T5"              # Route uses Terminal 5
+USE_TM_CA = "USE_TM_CA"        # Route uses Tanah Merah – Changi Airport corridor
 
-TEL_EXT = "TEL_EXT"
-CRL_EXT = "CRL_EXT"
+TEL_EXT = "TEL_EXT"            # TEL extension exists
+CRL_EXT = "CRL_EXT"            # CRL extension exists
 
-INT_WORKS = "INT_WORKS"
-REDUCED = "REDUCED"
-SUSPENDED = "SUSPENDED"
+INT_WORKS = "INT_WORKS"        # Systems integration works ongoing
+REDUCED = "REDUCED"            # Reduced service
+SUSPENDED = "SUSPENDED"        # Suspended service
 
 VALID_ROUTE = "VALID_ROUTE"
 INVALID_ROUTE = "INVALID_ROUTE"
-
 CONTRADICTION = "CONTRADICTION"
 
 
-# =========================
+# =====================================================
 # Knowledge Base Rules (CNF)
-# =========================
+# Each rule is grounded in the real-world problem text
+# =====================================================
 
 def get_rules():
     rules = []
 
-    # R1: Future mode implies TEL extension exists
+    # R1: Future Mode implies TEL extension exists
     rules.append({"~" + FUTURE, TEL_EXT})
 
-    # R2: Future mode implies CRL extension exists
+    # R2: Future Mode implies CRL extension exists
     rules.append({"~" + FUTURE, CRL_EXT})
 
-    # R3: Today mode implies TEL extension does not exist
+    # R3: Today Mode implies TEL extension does not exist
     rules.append({"~" + TODAY, "~" + TEL_EXT})
 
-    # R4: Today mode implies CRL extension does not exist
+    # R4: Today Mode implies CRL extension does not exist
     rules.append({"~" + TODAY, "~" + CRL_EXT})
 
-    # R5: Systems integration works imply reduced service
+    # R5: Today and Future modes cannot both be true
+    rules.append({"~" + TODAY, "~" + FUTURE, CONTRADICTION})
+
+    # R6: Systems integration works imply reduced service
     rules.append({"~" + INT_WORKS, REDUCED})
 
-    # R6: Suspended service cannot be reduced service
-    rules.append({"~" + SUSPENDED, "~" + REDUCED})
-
-    # R7: Today mode cannot use T5
-    rules.append({"~" + TODAY, "~" + USE_T5, INVALID_ROUTE})
-
-    # R8: Integration works invalidate routes using TM–CA
-    rules.append({"~" + INT_WORKS, "~" + USE_TM_CA, INVALID_ROUTE})
-
-    # R9: Suspended segments invalidate routes
-    rules.append({"~" + SUSPENDED, "~" + USE_TM_CA, INVALID_ROUTE})
-
-    # R10: Invalid route implies not valid route
-    rules.append({"~" + INVALID_ROUTE, "~" + VALID_ROUTE})
-
-    # R11: Reduced and suspended together is a contradiction
+    # R7: Reduced and suspended service cannot coexist
     rules.append({"~" + REDUCED, "~" + SUSPENDED, CONTRADICTION})
 
-    # R12: Suspended T5 cannot be used
+    # R8: Today Mode cannot use Terminal 5
+    rules.append({"~" + TODAY, "~" + USE_T5, INVALID_ROUTE})
+
+    # R9: Integration works invalidate routes using TM–CA corridor
+    rules.append({"~" + INT_WORKS, "~" + USE_TM_CA, INVALID_ROUTE})
+
+    # R10: Suspended service invalidates TM–CA routes
+    rules.append({"~" + SUSPENDED, "~" + USE_TM_CA, INVALID_ROUTE})
+
+    # R11: Suspended service invalidates T5 routes
     rules.append({"~" + SUSPENDED, "~" + USE_T5, INVALID_ROUTE})
+
+    # R12: Invalid route cannot be valid
+    rules.append({"~" + INVALID_ROUTE, "~" + VALID_ROUTE})
 
     return rules
 
 
-# =========================
+# =====================================================
 # Resolution Utilities
-# =========================
+# =====================================================
 
 def negate(literal):
     return literal[1:] if literal.startswith("~") else "~" + literal
@@ -82,29 +92,30 @@ def resolve(c1, c2):
     return None
 
 
-def resolution_entails(kb, query):
-    clauses = [set(c) for c in kb]
-    clauses.append({negate(query)})
+def resolution_entails(clauses, query):
+    clause_list = [set(c) for c in clauses]
+    clause_list.append({negate(query)})
 
     while True:
-        new = []
-        for i in range(len(clauses)):
-            for j in range(i + 1, len(clauses)):
-                resolvent = resolve(clauses[i], clauses[j])
+        new_clauses = []
+
+        for i in range(len(clause_list)):
+            for j in range(i + 1, len(clause_list)):
+                resolvent = resolve(clause_list[i], clause_list[j])
                 if resolvent is not None:
                     if len(resolvent) == 0:
                         return True
-                    new.append(resolvent)
+                    new_clauses.append(resolvent)
 
-        if all(c in clauses for c in new):
+        if all(c in clause_list for c in new_clauses):
             return False
 
-        clauses.extend(new)
+        clause_list.extend(new_clauses)
 
 
-# =========================
+# =====================================================
 # Scenario Runner
-# =========================
+# =====================================================
 
 def run_scenario(name, facts):
     print("\n==============================")
@@ -112,15 +123,15 @@ def run_scenario(name, facts):
     print("Facts:", facts)
 
     kb = get_rules()
-    for f in facts:
-        kb.append({f})
+    for fact in facts:
+        kb.append({fact})
 
-    # First: check contradiction
+    # Step 1: Advisory consistency check
     if resolution_entails(kb, CONTRADICTION):
         print("Inference Result: CONTRADICTORY ADVISORY SET")
         return
 
-    # Then: check invalid route
+    # Step 2: Route validity check
     if resolution_entails(kb, INVALID_ROUTE):
         print("Inference Result: INVALID ROUTE")
         return
@@ -128,9 +139,9 @@ def run_scenario(name, facts):
     print("Inference Result: VALID ROUTE")
 
 
-# =========================
-# Test Scenarios
-# =========================
+# =====================================================
+# Test Scenarios (aligned with real-world brief)
+# =====================================================
 
 if __name__ == "__main__":
 
