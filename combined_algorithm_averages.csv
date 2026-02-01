@@ -1,0 +1,5 @@
+Algorithm,AvgCostMinutes,AvgNodesExpanded,AvgTimeMilliseconds
+DFS,119.25,172.75,0.428783
+BFS,42.083333,16.0,0.048242
+GBFS,52.333333,6.083333,0.033433
+A*,39.5,19.5,0.072642
