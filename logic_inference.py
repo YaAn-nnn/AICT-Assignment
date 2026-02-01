@@ -178,6 +178,29 @@ def resolution_entails(clauses, query):
 
 
 # =====================================================
+# RULE EXPLANATIONS (for output only)
+# =====================================================
+
+RULE_EXPLANATIONS = {
+    ("TODAY", "TEL_EXT"): "TEL extension cannot exist in TODAY mode.",
+    ("TODAY", "CRL_EXT"): "CRL extension cannot exist in TODAY mode.",
+    ("TODAY", "FUTURE"): "The MRT network cannot be both TODAY and FUTURE.",
+    ("REDUCED", "SUSPENDED"): "Service cannot be both reduced and suspended.",
+    ("TODAY", "USE_T5"): "Terminal 5 cannot be used in TODAY mode.",
+    ("INT_WORKS", "USE_TM_CA"): "TM–CA corridor cannot be used during integration works.",
+    ("SUSPENDED", "USE_TM_CA"): "TM–CA corridor cannot be used when service is suspended.",
+    ("SUSPENDED", "USE_T5"): "Terminal 5 cannot be used when service is suspended.",
+}
+
+
+def explain_violation(facts):
+    for (a, b), text in RULE_EXPLANATIONS.items():
+        if a in facts and b in facts:
+            print("Violated Rule:", text)
+            return
+
+
+# =====================================================
 # SCENARIO RUNNER (decision logic)
 # =====================================================
 
@@ -195,11 +218,13 @@ def run_scenario(name, facts):
     # If contradictory, do not make any routing decision
     if resolution_entails(kb, CONTRADICTION):
         print("Inference Result: CONTRADICTORY ADVISORY SET")
+        explain_violation(facts)
         return
 
     # Step 2: If no contradiction, check route validity
     if resolution_entails(kb, INVALID_ROUTE):
         print("Inference Result: INVALID ROUTE")
+        explain_violation(facts)
         return
 
     # Step 3: Otherwise, the route is valid
