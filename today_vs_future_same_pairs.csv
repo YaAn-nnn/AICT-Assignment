@@ -1,13 +1,13 @@
 Algorithm,Start,Goal,TodayCostMin,TodayNodes,TodayTimeMs,FutureCostMin,FutureNodes,FutureTimeMs,DeltaCostMin_FutureMinusToday,DeltaNodes_FutureMinusToday,DeltaTimeMs_FutureMinusToday
-DFS,Changi Airport,City Hall,127.0,14,0.0467,161.0,24,0.0638,34.0,10,0.0171
-BFS,Changi Airport,City Hall,39.0,7,0.0141,39.0,15,0.0273,0.0,8,0.0132
-GBFS,Changi Airport,City Hall,70.0,7,0.0226,70.0,7,0.0505,0.0,0,0.0279
-A*,Changi Airport,City Hall,39.0,6,0.0199,39.0,9,0.0285,0.0,3,0.0086
-DFS,Changi Airport,Orchard,121.0,17,0.042,155.0,33,0.0741,34.0,16,0.0321
-BFS,Changi Airport,Orchard,49.0,16,0.0287,51.0,24,0.0563,2.0,8,0.0276
-GBFS,Changi Airport,Orchard,70.0,7,0.0292,70.0,7,0.0329,0.0,0,0.0037
-A*,Changi Airport,Orchard,49.0,13,0.0453,49.0,19,0.0534,0.0,6,0.0081
-DFS,Changi Airport,Gardens by the Bay,122.0,13,0.0299,156.0,23,0.05,34.0,10,0.0201
-BFS,Changi Airport,Gardens by the Bay,55.0,15,0.0211,52.0,12,0.0167,-3.0,-3,-0.0044
-GBFS,Changi Airport,Gardens by the Bay,54.0,7,0.0166,54.0,7,0.0163,0.0,0,-0.0003
-A*,Changi Airport,Gardens by the Bay,54.0,30,0.0514,41.0,13,0.0417,-13.0,-17,-0.0097
+DFS,Changi Airport,City Hall,127.0,14,0.0943,161.0,24,0.0921,34.0,10,-0.0022
+BFS,Changi Airport,City Hall,39.0,7,0.0234,39.0,15,0.0362,0.0,8,0.0128
+GBFS,Changi Airport,City Hall,70.0,7,0.034,70.0,7,0.0314,0.0,0,-0.0026
+A*,Changi Airport,City Hall,39.0,6,0.0294,39.0,9,0.0857,0.0,3,0.0563
+DFS,Changi Airport,Orchard,121.0,17,0.0674,155.0,33,0.1153,34.0,16,0.0479
+BFS,Changi Airport,Orchard,49.0,16,0.0354,51.0,24,0.05,2.0,8,0.0146
+GBFS,Changi Airport,Orchard,70.0,7,0.0256,70.0,7,0.0271,0.0,0,0.0015
+A*,Changi Airport,Orchard,49.0,13,0.0586,49.0,19,0.189,0.0,6,0.1304
+DFS,Changi Airport,Gardens by the Bay,122.0,13,0.0999,156.0,23,0.0559,34.0,10,-0.044
+BFS,Changi Airport,Gardens by the Bay,55.0,15,0.0261,52.0,12,0.0174,-3.0,-3,-0.0087
+GBFS,Changi Airport,Gardens by the Bay,54.0,7,0.0197,54.0,7,0.0718,0.0,0,0.0521
+A*,Changi Airport,Gardens by the Bay,54.0,30,0.0585,41.0,13,0.0323,-13.0,-17,-0.0262
